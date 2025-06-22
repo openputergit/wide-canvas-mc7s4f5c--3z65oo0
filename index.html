@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Surprise!</title>
+    <script src="https://unpkg.com/three@0.157.0/build/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        .balloon {
+            position: absolute;
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .message {
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.5s ease;
+            font-family: 'Dancing Script', cursive;
+        }
+        .message.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-pink-200 to-purple-300">
+    <div id="canvas-container"></div>
+    
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none flex items-center justify-center">
+        <div id="message" class="message text-6xl md:text-8xl text-pink-600 text-center z-10">
+            Happy Birthday! 🎉
+        </div>
+    </div>
+
+    <div id="hello" class="fixed top-4 left-4 text-2xl text-white opacity-0">Hello</div>
+
+    <script>
+        // Three.js Scene Setup
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Create particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 1000;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for(let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 5;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.005,
+            color: '#ff69b4'
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        camera.position.z = 3;
+
+        // Animation
+        const animate = () => {
+            requestAnimationFrame(animate);
+            particlesMesh.rotation.y += 0.001;
+            particlesMesh.rotation.x += 0.001;
+            renderer.render(scene, camera);
+        };
+
+        animate();
+
+        // Responsive canvas
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Show birthday message with delay
+        setTimeout(() => {
+            document.getElementById('message').classList.add('show');
+        }, 1000);
+
+        // Show hello text with fade
+        setTimeout(() => {
+            const hello = document.getElementById('hello');
+            hello.style.transition = 'opacity 1s ease';
+            hello.style.opacity = '1';
+        }, 2000);
+
+        // Create falling confetti effect
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.style.position = 'fixed';
+            confetti.style.width = '10px';
+            confetti.style.height = '10px';
+            confetti.style.backgroundColor = ['#ff69b4', '#87ceeb', '#dda0dd', '#90ee90'][Math.floor(Math.random() * 4)];
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.top = '-10px';
+            confetti.style.borderRadius = '50%';
+            confetti.style.pointerEvents = 'none';
+            document.body.appendChild(confetti);
+
+            const animation = confetti.animate([
+                { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                { transform: `translateY(100vh) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+            ], {
+                duration: Math.random() * 2000 + 2000,
+                easing: 'linear'
+            });
+
+            animation.onfinish = () => confetti.remove();
+        }
+
+        // Generate confetti continuously
+        setInterval(createConfetti, 100);
+
+        // Add click/touch interaction
+        document.addEventListener('click', (event) => {
+            const x = event.clientX;
+            const y = event.clientY;
+            
+            // Create burst of particles at click/touch point
+            for(let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'absolute w-2 h-2 rounded-full pointer-events-none';
+                particle.style.backgroundColor = ['#ff69b4', '#87ceeb', '#dda0dd', '#90ee90'][Math.floor(Math.random() * 4)];
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                document.body.appendChild(particle);
+
+                const angle = (i / 10) * Math.PI * 2;
+                const velocity = 10;
+                const animation = particle.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { 
+                        transform: `translate(${Math.cos(angle) * 100}px, ${Math.sin(angle) * 100}px) scale(0)`,
+                        opacity: 0 
+                    }
+                ], {
+                    duration: 1000,
+                    easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+                });
+
+                animation.onfinish = () => particle.remove();
+            }
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
